@@ -1,8 +1,10 @@
-;Password
-password = yourpassword
+; Authentication
+; Password should be hashed for security reasons. 
+; It's recommended to hash passwords using password_hash() function and store the hashed value.
+password_hash = ""
 
-;Encryption. Set to clear, and later it will changed to password_hash automatically during login
-encryption = clear
+; Encryption method for password. Options: "clear" or "password_hash".
+encryption = "clear"
 
-;Role
-role = admin
+; User Role
+role = "admin"
