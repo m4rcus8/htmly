@@ -6,26 +6,20 @@ require 'system/includes/session.php';
 config('source', 'config/config.ini');
 
 // Set the timezone
-if (config('timezone')) {
-    date_default_timezone_set(config('timezone'));
-} else {
-    date_default_timezone_set('Asia/Jakarta');
-}
+date_default_timezone_set(config('timezone', 'Asia/Jakarta'));
 
 $whitelist = array('jpg', 'jpeg', 'jfif', 'pjpeg', 'pjp', 'png', 'gif');
-$name      = null;
 $dir       = 'content/images/';
 $error     = null;
 $timestamp = date('YmdHis');
 $path      = null;
 
 if (login()) {
- 
     if (!is_dir($dir)) {
         mkdir($dir, 0755, true);
     }
 
-    if (isset($_FILES) && isset($_FILES['file'])) {
+    if (isset($_FILES['file'])) {
         $tmp_name = $_FILES['file']['tmp_name'];
         $name     = basename($_FILES['file']['name']);
         $error    = $_FILES['file']['error'];
@@ -33,14 +27,20 @@ if (login()) {
 	
         $check = getimagesize($tmp_name);
 	
-        if($check !== false) {
+        if ($check !== false) {
             if ($error === UPLOAD_ERR_OK) {
                 $extension = pathinfo($name, PATHINFO_EXTENSION);
                 if (!in_array(strtolower($extension), $whitelist)) {
                     $error = 'Invalid file type uploaded.';
                 } else {
-                    move_uploaded_file($tmp_name, $dir . $timestamp . '-' . $name);
+                    if (move_uploaded_file($tmp_name, $path)) {
+                        $path = $timestamp . '-' . $name; // Update path after successful move
+                    } else {
+                        $error = 'Failed to move uploaded file.';
+                    }
                 }
+            } else {
+                $error = 'Upload error occurred.';
             }
         } else {
             $error = "File is not an image.";
@@ -49,7 +49,7 @@ if (login()) {
 
     header('Content-Type: application/json');
     echo json_encode(array(
-        'path' => $path,
+        'path'  => $path,
         'name'  => $name,
         'error' => $error,
     ));
@@ -58,5 +58,5 @@ if (login()) {
 
 } else {
     $login = site_url() . 'login';
-    header("location: $login");
+    header("Location: $login");
 }
